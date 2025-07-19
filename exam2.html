@@ -8,12 +8,34 @@
         body {
             font-family: Arial, sans-serif;
             background-color: #f0f0f0;
-            margin: 20px;
+            margin: 0;
+            padding-top: 60px;
+        }
+
+        nav {
+            background-color: #222;
+            padding: 15px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 999;
+        }
+
+        nav a {
+            color: white;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            color: #ddd;
         }
 
         .container {
             max-width: 1000px;
-            margin: 0 auto;
+            margin: 20px auto;
             background-color: white;
             border: 2px solid #ccc;
             padding: 20px;
@@ -152,12 +174,20 @@
     </style>
 </head>
 <body>
-    <div class="container">
+ <nav>
+        <a href="/Exam2/exam2.html">Exam #2</a>
+        <a href="/assignment1/index.html">Assignment 1</a>
+        <a href="/prog4/prog4.html">Assignment 2</a>
+        <a href="/GroupCSS/GroupCSS2.html">Assignment 3</a>
+        <a href="/ButtonMove/index.html">Button Move</a>
+        <a href="/SortDemo/sort.html">Sort Demo</a>
+        <a href="/prog09/index.html">Card</a>
+    </nav>    <div class="container">
         <h1>Exam #2 - Word Vowel Counter</h1>
-        <p class="description">It reads words from a file, counts vowels in  the each word, and lets you drag and drop words.</p>
+        <p class="description">This program reads words from a file, counts vowels (A,E,I,O,U) in each word, and lets you drag and drop words.</p>
 
         <div class="vowel-buttons">
-            <h2>Click a number to get the words with that many vowel counts: eg: if you click 1 then you will get a word with just one vowel.</h2>
+            <h2>Click a number to see words with that many vowels:</h2>
             <div id="vowelButtons">
                 <div class="loading">Loading available vowel counts...</div>
             </div>
@@ -172,7 +202,7 @@
             </div>
 
             <div class="drop-section">
-                <h2>Drag and Drop here please</h2>
+                <h2>Drop Zone</h2>
                 <div class="drop-area" id="dropArea">
                     <div class="dropped-words" id="droppedWords"></div>
                     <p>Drag words here from the list</p>
@@ -326,6 +356,8 @@
             droppedWordsCount = 0;
             updateWordCount();
         }
+
+
     </script>
 </body>
 </html>
