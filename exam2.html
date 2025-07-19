@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam #2 - Word Vowel Counter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border: 2px solid #ccc;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #444;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .vowel-buttons {
+            margin-bottom: 30px;
+        }
+
+        .vowel-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .vowel-btn:hover {
+            background-color: #45a049;
+        }
+
+        .main-content {
+            display: table;
+            width: 100%;
+        }
+
+        .words-section, .drop-section {
+            display: table-cell;
+            width: 50%;
+            padding: 10px;
+            vertical-align: top;
+        }
+
+        .words-list {
+            height: 400px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #fafafa;
+        }
+
+        .word-item {
+            background-color: #2196F3;
+            color: white;
+            padding: 8px 12px;
+            margin: 5px;
+            display: inline-block;
+            cursor: move;
+        }
+
+        .word-item:hover {
+            background-color: #1976D2;
+        }
+
+        .drop-area {
+            min-height: 300px;
+            border: 2px dashed #999;
+            padding: 20px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+
+        .drop-area.drag-over {
+            border-color: #4CAF50;
+            background-color: #e8f5e8;
+        }
+
+        .dropped-words {
+            margin-bottom: 20px;
+            min-height: 100px;
+        }
+
+        .dropped-word {
+            background-color: #FF9800;
+            color: white;
+            padding: 6px 10px;
+            margin: 3px;
+            display: inline-block;
+        }
+
+        .word-counter {
+            background-color: #f44336;
+            color: white;
+            padding: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .clear-btn {
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .clear-btn:hover {
+            background-color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            color: #888;
+            font-style: italic;
+        }
+
+        .error {
+            color: red;
+            background-color: #ffeeee;
+            padding: 10px;
+            border: 1px solid #ffcccc;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Exam #2 - Word Vowel Counter</h1>
+        <p class="description">It reads words from a file, counts vowels in  the each word, and lets you drag and drop words.</p>
+
+        <div class="vowel-buttons">
+            <h2>Click a number to get the words with that many vowel counts: eg: if you click 1 then you will get a word with just one vowel.</h2>
+            <div id="vowelButtons">
+                <div class="loading">Loading available vowel counts...</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="words-section">
+                <h2>Words List (sorted by length)</h2>
+                <div class="words-list" id="wordsList">
+                    <div class="loading">Select a vowel count to see words</div>
+                </div>
+            </div>
+
+            <div class="drop-section">
+                <h2>Drag and Drop here please</h2>
+                <div class="drop-area" id="dropArea">
+                    <div class="dropped-words" id="droppedWords"></div>
+                    <p>Drag words here from the list</p>
+                    <div class="word-counter">
+                        Words Dropped: <span id="wordCount">0</span>
+                    </div>
+                    <button class="clear-btn" onclick="clearDroppedWords()">Clear All Words</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let droppedWordsCount = 0;
+        let currentWords = [];
+
+        // Load vowel counts on page load
+        document.addEventListener('DOMContentLoaded', loadVowelCounts);
+
+        async function loadVowelCounts() {
+            try {
+                const response = await fetch('words_processor.php');
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('vowelButtons').innerHTML = 
+                        `<div class="error">Error: ${data.error}</div>`;
+                    return;
+                }
+
+                const buttonsContainer = document.getElementById('vowelButtons');
+                buttonsContainer.innerHTML = '';
+
+                data.vowelCounts.forEach(count => {
+                    const button = document.createElement('button');
+                    button.className = 'vowel-btn';
+                    button.textContent = count.toString();
+                    button.onclick = () => loadWords(count);
+                    buttonsContainer.appendChild(button);
+                });
+            } catch (error) {
+                document.getElementById('vowelButtons').innerHTML = 
+                    `<div class="error">Error loading vowel counts: ${error.message}</div>`;
+            }
+        }
+
+        async function loadWords(vowelCount) {
+            const wordsList = document.getElementById('wordsList');
+            wordsList.innerHTML = '<div class="loading">Loading words...</div>';
+
+            try {
+                const response = await fetch('words_processor.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ vowelCount: vowelCount })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentWords = data.words;
+                    displayWords(data.words);
+                } else {
+                    wordsList.innerHTML = `<div class="error">${data.message}</div>`;
+                }
+            } catch (error) {
+                wordsList.innerHTML = `<div class="error">Error loading words: ${error.message}</div>`;
+            }
+        }
+
+        function displayWords(words) {
+            const wordsList = document.getElementById('wordsList');
+            wordsList.innerHTML = '';
+
+            if (words.length === 0) {
+                wordsList.innerHTML = '<div class="loading">No words found</div>';
+                return;
+            }
+
+            words.forEach(word => {
+                const wordElement = document.createElement('div');
+                wordElement.className = 'word-item';
+                wordElement.textContent = word;
+                wordElement.draggable = true;
+                
+                wordElement.addEventListener('dragstart', handleDragStart);
+                wordElement.addEventListener('dragend', handleDragEnd);
+                
+                wordsList.appendChild(wordElement);
+            });
+        }
+
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.textContent);
+            e.target.classList.add('dragging');
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        // Drop area event listeners
+        const dropArea = document.getElementById('dropArea');
+
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('drag-over');
+        });
+
+        dropArea.addEventListener('dragleave', (e) => {
+            if (!dropArea.contains(e.relatedTarget)) {
+                dropArea.classList.remove('drag-over');
+            }
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('drag-over');
+            
+            const word = e.dataTransfer.getData('text/plain');
+            addDroppedWord(word);
+        });
+
+        function addDroppedWord(word) {
+            const droppedWordsContainer = document.getElementById('droppedWords');
+            
+            // Check if word already exists
+            const existingWords = Array.from(droppedWordsContainer.children);
+            if (existingWords.some(el => el.textContent === word)) {
+                return; // Don't add duplicates
+            }
+            
+            const wordElement = document.createElement('div');
+            wordElement.className = 'dropped-word';
+            wordElement.textContent = word;
+            
+            droppedWordsContainer.appendChild(wordElement);
+            
+            droppedWordsCount++;
+            updateWordCount();
+        }
+
+        function updateWordCount() {
+            document.getElementById('wordCount').textContent = droppedWordsCount;
+        }
+
+        function clearDroppedWords() {
+            document.getElementById('droppedWords').innerHTML = '';
+            droppedWordsCount = 0;
+            updateWordCount();
+        }
+    </script>
+</body>
+</html>
